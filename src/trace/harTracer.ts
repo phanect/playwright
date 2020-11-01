@@ -24,29 +24,17 @@ import * as har from './har';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
-export function installHarTracer() {
-  contextListeners.add(new HarTracer());
-}
-
-class HarTracer implements ContextListener {
+export class HarTracer {
   private _contextTracers = new Map<BrowserContext, HarContextTracer>();
 
-  async onContextCreated(context: BrowserContext): Promise<void> {
+  async createContextTracer(context: BrowserContext): Promise<void> {
     if (!context._options.recordHar)
       return;
     const contextTracer = new HarContextTracer(context, context._options.recordHar);
     this._contextTracers.set(context, contextTracer);
   }
 
-  async onContextWillDestroy(context: BrowserContext): Promise<void> {
-    const contextTracer = this._contextTracers.get(context);
-    if (contextTracer) {
-      this._contextTracers.delete(context);
-      await contextTracer.flush();
-    }
-  }
-
-  async onContextDidDestroy(context: BrowserContext): Promise<void> {
+  async flushContextTracer(context: BrowserContext): Promise<void> {
     const contextTracer = this._contextTracers.get(context);
     if (contextTracer) {
       this._contextTracers.delete(context);

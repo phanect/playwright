@@ -24,7 +24,6 @@ import { Transport } from './protocol/transport';
 import { Electron } from './server/electron/electron';
 import { Playwright } from './server/playwright';
 import { gracefullyCloseAll } from './server/processLauncher';
-import { installHarTracer } from './trace/harTracer';
 import { installTracer } from './trace/tracer';
 
 
@@ -47,7 +46,6 @@ export async function apiJson(): Promise<string> {
 export function runServer() {
   installDebugController();
   installTracer();
-  installHarTracer();
 
   const dispatcherConnection = new DispatcherConnection();
   const transport = new Transport(process.stdout, process.stdin);

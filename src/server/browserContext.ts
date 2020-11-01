@@ -22,6 +22,7 @@ import { Browser, BrowserOptions } from './browser';
 import * as dom from './dom';
 import { Download } from './download';
 import * as frames from './frames';
+import { HarTracer } from '../trace/harTracer';
 import { helper } from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
@@ -82,8 +83,7 @@ export async function runAction<T>(task: (controller: ProgressController) => Pro
 
 export interface ContextListener {
   onContextCreated(context: BrowserContext): Promise<void>;
-  onContextWillDestroy(context: BrowserContext): Promise<void>;
-  onContextDidDestroy(context: BrowserContext): Promise<void>;
+  onContextDestroyed(context: BrowserContext): Promise<void>;
 }
 
 export const contextListeners = new Set<ContextListener>();
@@ -109,6 +109,7 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   readonly _actionListeners = new Set<ActionListener>();
+  private harTracer = new HarTracer();
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();
@@ -130,6 +131,7 @@ export abstract class BrowserContext extends EventEmitter {
   async _initialize() {
     for (const listener of contextListeners)
       await listener.onContextCreated(this);
+    this.harTracer.createContextTracer(this);
   }
 
   async _ensureVideosPath() {
@@ -271,8 +273,7 @@ export abstract class BrowserContext extends EventEmitter {
     if (this._closedStatus === 'open') {
       this._closedStatus = 'closing';
 
-      for (const listener of contextListeners)
-        await listener.onContextWillDestroy(this);
+      this.harTracer.flushContextTracer(this);
 
       // Collect videos/downloads that we will await.
       const promises: Promise<any>[] = [];
@@ -301,7 +302,9 @@ export abstract class BrowserContext extends EventEmitter {
 
       // Bookkeeping.
       for (const listener of contextListeners)
-        await listener.onContextDidDestroy(this);
+        await listener.onContextDestroyed(this);
+
+      this.harTracer.flushContextTracer(this);
       this._didCloseInternal();
     }
     await this._closePromise;
