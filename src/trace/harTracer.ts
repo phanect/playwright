@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as util from 'util';
-import { BrowserContext, ContextListener, contextListeners } from '../server/browserContext';
+import { BrowserContext } from '../server/browserContext';
 import { helper } from '../server/helper';
 import * as network from '../server/network';
 import { Page } from '../server/page';
@@ -27,10 +27,10 @@ const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 export class HarTracer {
   private _contextTracers = new Map<BrowserContext, HarContextTracer>();
 
-  async createContextTracer(context: BrowserContext): Promise<void> {
-    if (!context._options.recordHar)
+  async createContextTracer(context: BrowserContext, options?: { omitContent?: boolean, path: string }): Promise<void> {
+    if (!options)
       return;
-    const contextTracer = new HarContextTracer(context, context._options.recordHar);
+    const contextTracer = new HarContextTracer(context, options);
     this._contextTracers.set(context, contextTracer);
   }
 

@@ -131,7 +131,7 @@ export abstract class BrowserContext extends EventEmitter {
   async _initialize() {
     for (const listener of contextListeners)
       await listener.onContextCreated(this);
-    this.harTracer.createContextTracer(this);
+    this.harTracer.createContextTracer(this, this._options.recordHar);
   }
 
   async _ensureVideosPath() {
@@ -178,6 +178,11 @@ export abstract class BrowserContext extends EventEmitter {
     if (urls && !Array.isArray(urls))
       urls = [ urls ];
     return await this._doCookies(urls as string[]);
+  }
+
+  async createNewHar(options: { omitContent?: boolean, path: string }): Promise<void> {
+    await this.harTracer.flushContextTracer(this);
+    await this.harTracer.createContextTracer(this, options);
   }
 
   setHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
