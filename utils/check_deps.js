@@ -103,6 +103,8 @@ DEPS['src/server/'] = [
   // Can depend on any files in these subdirectories.
   'src/server/common/**',
   'src/server/injected/**',
+
+  'src/trace/harTracer.ts',
 ];
 
 // No dependencies for code shared between node and page.

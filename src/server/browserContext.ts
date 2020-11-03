@@ -131,7 +131,7 @@ export abstract class BrowserContext extends EventEmitter {
   async _initialize() {
     for (const listener of contextListeners)
       await listener.onContextCreated(this);
-    this.harTracer.createContextTracer(this, this._options.recordHar);
+    await this.harTracer.createContextTracer(this, this._options.recordHar);
   }
 
   async _ensureVideosPath() {
@@ -278,7 +278,7 @@ export abstract class BrowserContext extends EventEmitter {
     if (this._closedStatus === 'open') {
       this._closedStatus = 'closing';
 
-      this.harTracer.flushContextTracer(this);
+      await this.harTracer.flushContextTracer(this);
 
       // Collect videos/downloads that we will await.
       const promises: Promise<any>[] = [];
@@ -309,7 +309,7 @@ export abstract class BrowserContext extends EventEmitter {
       for (const listener of contextListeners)
         await listener.onContextDestroyed(this);
 
-      this.harTracer.flushContextTracer(this);
+      await this.harTracer.flushContextTracer(this);
       this._didCloseInternal();
     }
     await this._closePromise;
